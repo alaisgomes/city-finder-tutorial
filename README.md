@@ -1,6 +1,17 @@
 # City Finder
 Plugin-tutorial do QGIS, documentado em português para versão 2.18.X
 
+## Instalação e Configuração do QGIS
+Siga as instruções no site oficial, atentados-se à versão utilizada.
+
+- https://qgis.org/debian-ltr/
+- https://qgis.org/en/site/forusers/alldownloads.html#linux
+
+```sh
+sudo apt-get update
+sudo apt-get install qgis python-qgis qgis-plugin-grass python-qt4  python-qt4-dev
+sudo apt-get install pyqt4-dev-tools qt4-designer
+```
 
 ## Inicializando
 Um plugin do QGIS possui uma estrutura básica com seguitnes arquivos:
