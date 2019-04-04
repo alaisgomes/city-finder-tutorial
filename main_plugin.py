@@ -3,6 +3,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
 from qgis.gui import *
+from ui.main_docker import CityFilterDockWidget
 import resources
 
 class CityFilter:
@@ -14,6 +15,7 @@ class CityFilter:
             iface: referência à interface principal do QGIS.
         """
         self.iface = iface
+        self.docker = CityFilterDockWidget()
 
     def initGui(self):
         """ Inicializa a interface do plugin
@@ -39,12 +41,13 @@ class CityFilter:
         # Adicionar na interface do QGIS, no menu ToolBar de plugins, a ação desejada
         self.iface.addToolBarIcon(self.button_action)
 
+        # iniciar o docker
 
     def executar(self):
         """ Função que executa o plugin
         """
-        print("Executei!")
-        pass
+        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.docker)
+        self.docker.show()
 
     def unload(self):
         """Remove o seu icone da QGIS GUI."""

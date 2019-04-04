@@ -77,7 +77,48 @@ def unload(self):
     self.iface.removeToolBarIcon(self.button_action)
 ```
 
+## Menu Inicial
+Vamos criar um menu inicial que será aberto assim que clicarmos no botão do nosso plugin usando o QtDesigner. Abra o QtDesigner e escolha criar um novo Widget do tipo "QDockWidget". Faça algo semelhante ao exemplo a seguir, seguindo a nomeação dos objetos:
+
+![Screenshot1](./img/screenshot1.png)
+
+Crie um diretório chamado `ui/` em seu projeto e salve o arquivo como `main_docker.ui`.
+
+Agora, crie um novo arquivo chamado main_docker.py e cole o código abaixo:
+
+```python
+# -*- utf-8 -*-
+import os
+from PyQt4 import QtGui, uic
+
+FORM_CLASS, _ = uic.loadUiType(os.path.join(
+    os.path.dirname(__file__), 'main_docker.ui'))
 
 
+class CityFilterDockWidget(QtGui.QDockWidget, FORM_CLASS):
+    def __init__(self, parent=None):
+        """Constructor."""
+        super(CityFilterDockWidget, self).__init__(parent)
+        self.setupUi(self)
+```
 
+Esse código permite que você altere o arquivo `.ui` como quiser no qt designer e o que for contruído lá será sempre carregado no Python com as devidas alterações.
+
+Vamos agora carregar o Widget na interface do QGIS. Para isso, vamos importar a classe criada no arquivo criado anteriormente (`main_docker.py`) no plugin principal e vamos inicializar a instância do objeto no construtor da classe:
+
+```python
+def __init__(self, iface):
+    ...
+    self.docker = CityFilterDockWidget()
+```
+
+Vamos agora fazer com que o Widget seja adicionado à interface sempre que clicarmos na ação do plugin. Ou seja, adicionar o código no método `executar()`. Ele agora fica assim:
+
+```python
+def executar(self):
+    """ Função que executa o plugin
+    """
+    self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.docker)
+    self.docker.show()
+```
 
