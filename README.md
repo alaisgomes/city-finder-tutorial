@@ -21,7 +21,7 @@ Um plugin do QGIS possui uma estrutura básica com seguintes arquivos:
 - metadata.txt (__obrigatório__): Contém informações gerais de um plugin, como sua versão, nome e outros metadados.
 - resources.qrc: Um arquivo `.xml` que pode ser criado pelo QtDesigner. Contém os caminhos relativos para recursos visuais (como imagens) e outros. Neste tutorial, criaremos este arquivo manualmente para carregar apenas o ícone do plugin.
 - resources.py: É o compilado do `resources.qrc`
-- icon.png: O arquivo do ícone do nosso plugin, obtido no site [iconfinder.com]. Créditos ao autor [Aleksandr Reva](https://www.iconfinder.com/icons/1267304/bank_location_map_office_pin_icon).
+- icon.png: O arquivo do ícone do nosso plugin, obtido no site [iconfinder.com](//www.iconfinder.com/). Créditos ao autor [Aleksandr Reva](https://www.iconfinder.com/icons/1267304/bank_location_map_office_pin_icon).
 
 ## Compilando o arquivo .qrc
 Para que os recursos visuais (ícones) sejam carregados no qgis pelo python, é necessário compilar o arquivo `.qrc`. Para isso, abra o terminal do OSGEO4W Shell, caso esteja no windows, ou terminal normal do Linux e execute o comando, dentro da pasta do projeto:
