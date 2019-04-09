@@ -248,5 +248,180 @@ Agora vamos desenvolver a lógica o método `por_estado()`. A lógica deve segui
 Alguns desses passos, no momento, não terão explicações muito aprofundadas, pois o objetivo deste tutorial é introduzir o desenvolvimento de plugins. Ao final desta página, serão apresentados algumas referências e exercícios de continuação, caso queira aprofundar seus estudos no assunto (QGIS, Python ou QT).
 
 
+### Janela de Diálogo FiltroDialog()
+Ao clicar no botão `Filtrar` no docker do plugin, é necessário escolher então, especificamente, por qual estado (ou região) desejamos filtrar os municípios. Para isso, criaremos uma janela de diálogo `QDialog` que conterá um combobox com as opções de escolha.
 
+Vamos então criar um arquigo chamado `filer_dialog.py` no diretório `ui/` do nosso plugin.  Dentro, vamos ter o seguinte código:
+
+
+```python
+# -*- coding: utf-8 -*-
+from PyQt4.QtGui import (QDialog, QVBoxLayout,
+                         QDialogButtonBox, QLabel,
+                         QComboBox)
+from PyQt4.QtCore import Qt
+
+
+class FilterDialog(QDialog):
+    def __init__(self, opcoes_list, parent=None):
+        super(FilterDialog, self).__init__(parent)
+        """ Janela de dialogo criada independente
+        (como uma opção ao uso do qt designer)
+        """
+
+        # Cria um layout para a  sua janela de input QDialog
+        self.layout = QVBoxLayout(self)
+
+        #Cria um label e adiciona no layout
+        self.label = QLabel(u"Escolha o valor de filtro:")
+        self.layout.addWidget(self.label)
+
+        # Cria combobox com a lista de opcoes a escolher
+        # e adicionar no layout
+        self.filtro_box = QComboBox()
+        self.filtro_box.addItems(opcoes_list)
+        self.layout.addWidget(self.filtro_box)
+
+        # Cria botoes de submeter e adiciona ao layout
+        self.buttons =  (
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+            Qt.Horizontal, self)
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+        self.layout.addWidget(self.buttons)
+
+    def valor_atual(self):
+        """ Retorna qual  valor atual na combo box (valor escolhido) """
+        return self.filtro_box.currentText()
+
+```
+
+#### Explicação da janela de filtro
+
+Neste código, criamos a classe FilterDialog que é baseada em uma `QDialog`. Adicionamos então, no seu contrutor, toda a interface.
+
+Começamos pela criação de um layout do tipo vertical, em que os widgets adicionados ao nosso layout seriam inseridos um em baixo do outro ([QVBoxLayout](https://doc.qt.io/archives/qt-4.8/qvboxlayout.html), se fosse horizontal QHBoxLayout e widgets estariam um ao lado do outro).
+
+Em seguida, adicionamos então um label (texto explicativo) com instruções para o usuário. Criamos uma QComboBox que conterá a lista das opções a serem escolhidas. Por fim, adicionamos os botões de aceitar ou cancelar a ação da combo box. Para explicação no funcionamento destes, recomendo uma consulta à documentação de [QDialogButtonBox](https://doc.qt.io/archives/qt-4.8/qdialogbuttonbox.html).
+
+Por fim, temos um método que será chamado externamente para retornar o valor atual (escolhido pelo usuário) se a janela for executada corretamente.
+
+### Método por_estado()
+Voltando ao código de filtro por estados, vamos então pegar todos os nomes de estados existentes na tabela de atributos e criar nossa janela de filtro passando esta lista de opções.
+
+Para isso, primeiro precisamos pegar a referência da coluna de estados na camada de estados e, em seguida, a lista de todos os estados com nome único na tabela usando o método da classe QgsVectorLayer chamado `uniqueValues()`:
+
+```python
+def por_estado(self, municipios_layer, estados_layer):
+    index_coluna = estados_layer.fieldNameIndex('NM_ESTADO')
+    lista_de_estados = estados.uniqueValues(index_coluna)
+```
+
+Agora, vamos passar a lista retornada para a janela de diálogo que vamos criar e, vamos executar a janela:
+
+```python
+def por_estado(self, municipios_layer, estados_layer):
+    index_coluna = estados_layer.fieldNameIndex('NM_ESTADO')
+    lista_de_estados = estados.uniqueValues(index_coluna)
+
+    janela_filtro = FilterDialog(lista_de_estados)
+    resultado = janela_filtro.exec_()
+```
+
+Se o resultado de retorno for positivo, vamos então pegar o valor selecionado, usando o método da classe `valor_atual()` que criamos anteriormente.
+
+
+```python
+def por_estado(self, municipios_layer, estados_layer):
+    ...
+
+    janela_filtro = FilterDialog(lista_de_estados)
+    resultado = janela_filtro.exec_()
+    if resultado:
+        nome_estado = janela_filtro.valor_atual()
+```
+
+#### Busca de Features
+
+Usando o nome do estado, precisamos pegar a feição correspondende ao mesmo na camada de estados. Para isso, vamos criar um método auxiliar que cria expressão que acha feições com base no nome de uma coluna e seu valor equivalente naquela coluna. Faremos essa função de forma genérica para que consigamos pegar tanto um estado quanto os estados dentro de uma região.
+```python
+def pegar_por_nome(self, camada, tipo_campo, nome):
+
+    expression = QgsExpression(
+        '"{tipo}" LIKE \'{nome}\''.format(
+            tipo=tipo_campo, nome=nome)
+        )
+
+    features_iterator = camada.getFeatures(QgsFeatureRequest(expression))
+
+    return [feat for feat in features_iterator]
+```
+
+o método acima cria uma expressão do tipo [QgsExpression](https://qgis.org/api/2.18/classQgsExpression.html) em que o tipo (nome da coluna) é igual ao valor passado (nome específico do estado ou região). ou seja, teríamos uma expressão do tipo **"NM_ESTADO" LIKE 'GOIÁS'** para encontrar a feição com informações do estado de Goiás.
+
+Essa expressão então é usada para fazer uma requisição/busca de feições ([QgsFeatureRequest](https://qgis.org/api/2.18/classQgsFeatureRequest.html)) usando o método getFeatures() da camada em que se deseja buscar.
+
+Veja que, no final, o `getFeatures()` retorna um [iterador](https://anandology.com/python-practice-book/iterators.html) de feições e não uma lista de feições e, por isso, precisamos iterar sobre o mesmo para criar a nossa lista de feições a serem retornadas.
+
+**Nota**: Essas queries/expressões dentro do QGIS referenciam colunas com aspas duplas e texto/string com aspas simples.
+
+## Método por_estado() parte 2
+Voltando ao filtro por estado, usamos o nosso método criado anteriormente para obter a feição que represente o estado desejado, mas obtendo apenas o primeiro valor retornado (caso exista outro estado com o mesmo nome, este será completamente ignorado aqui).
+
+Acessamos a tabela de atributos da feição do estado escolhido para obter o seu código e, usando o método `selectByExpression()` da camada de municipios, selecionamos todos os municípios com uma expressão de filtro que busca por todos que possuam o código que se inicia com o código do estado. Por exemplo, se o código (valor na coluna **CD_GEOCUF** de estados) do estado de Goiás é **52**, nossa query dentro de municípios ficaria do tipo **"CD_GEOCMU" LIKE '52%'**, onde o `%` representa que qualquer outro valor pode existir depois do 52.
+
+No fim, este método ficaria parecido com o seguinte:
+
+
+```python
+def por_estado(self, municipios_layer, estados_layer):
+    index_coluna = estados_layer.fieldNameIndex('NM_ESTADO')
+
+    lista_de_estados = estados_layer.uniqueValues(index_coluna)
+
+    janela_filtro = FilterDialog(lista_de_estados)
+
+    if janela_filtro.exec_():
+
+        nome_estado = janela_filtro.valor_atual()
+        estado_escolhido = self.pegar_por_nome(estados_layer, 'NM_ESTADO', nome_estado)[0]
+
+        # pega código ID do estado
+        id_estado = estado_escolhido['CD_GEOCUF']
+
+        filtro_municipio = '"CD_GEOCMU" LIKE \'{id}%\''.format(id=id_estado)
+        municipios_layer.selectByExpression(filtro_municipio) # seleciona as features desejadas
+```
+
+## Método por_regiao()
+O código do método por região é muito semelhante ao de por estado, so que agora, vamos iterar sobre a lista retornada na busca de `pegar_por_nome()` e vamos criar uma query que filtre todos os municípios que pertencem a vários estados que compõem a região:
+
+```python
+    def por_regiao(self, municipios, estados):
+        index_coluna = estados.fieldNameIndex('NM_REGIAO')
+
+        lista_de_regioes = estados.uniqueValues(index_coluna)
+
+        janela_filtro = FilterDialog(lista_de_regioes)
+
+        if janela_filtro.exec_():
+            nome_regiao = janela_filtro.valor_atual()
+
+            estados_na_regiao = self.pegar_por_nome(estados, 'NM_REGIAO', nome_regiao)
+
+            # inicia a expressão SQL
+            filtro_municipio = ''
+
+            # para cada estado, adiciona uma expressão de filtro de municipios
+            for estado in estados_na_regiao:
+                id_estado = estado['CD_GEOCUF']
+
+                # se ja existir algo na expressão, adiciona um OR pra continuar criando
+                if filtro_municipio:
+                    filtro_municipio += ' OR '
+
+                filtro_municipio += '"CD_GEOCMU" LIKE \'{id}%\''.format(id=id_estado)
+
+            municipios.selectByExpression(filtro_municipio)
+```
 

@@ -8,7 +8,7 @@ from PyQt4.QtCore import Qt
 class FilterDialog(QDialog):
     def __init__(self, opcoes_list, parent=None):
         super(FilterDialog, self).__init__(parent)
-        """ Janela de dialogo criada idependente
+        """ Janela de dialogo criada independente
         (como uma opção ao uso do qt designer)
         """
 
