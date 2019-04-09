@@ -138,6 +138,8 @@ Antes de qualquer coisa, precisamos realizar o download das camadas que serão u
 
 Abrindo a tabela de atributos das duas camadas, vemos que os estados possuem nome (NM_ESTADO), uma região associada (NM_REGIAO) e um código (CD_GEOCUF). Já os municípios posssuem um nome (NM_MUNICIP) e um código (CD_GEOCMU). O código de cada município está atrelado ao estado ao qual pertence: os dois primeiros dígidos correspondem ao código de cada estado. Dessa forma, conseguimos combinar os dados nas duas tabelas para atingir nosso objetivo.
 
+![Tabela de Atributos](./img/ss3.png)
+
 Vamos então adicionar funcionalidade aos botões que existem no nosso docker. para acessar os botões, lembre-se do nome dado a cada objeto criado no QtDesigner. Por exemplo, se abrirmos o arquivo xml `main_docker.ui` e procurarmos por algum objeto do tipo `QPushButton` podemos encontrar uma declaração do tipo:
 
 ```xml
