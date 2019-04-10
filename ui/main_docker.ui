@@ -6,14 +6,32 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>267</width>
-    <height>144</height>
+    <width>274</width>
+    <height>152</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>DockWidget</string>
   </property>
   <widget class="QWidget" name="filter_dockwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>273</width>
+     <height>127</height>
+    </size>
+   </property>
    <widget class="QWidget" name="gridLayoutWidget">
     <property name="geometry">
      <rect>

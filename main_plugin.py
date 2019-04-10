@@ -5,6 +5,7 @@ from qgis.core import *
 from qgis.gui import *
 from ui.main_docker import CityFilterDockWidget
 from ui.filter_dialog import FilterDialog
+from lib.select_tool import SelectTool
 import resources
 
 
@@ -49,10 +50,37 @@ class CityFilter():
         self.docker.filtro_box.addItems(self.valores_combobox)
         self.docker.filtrar_button.clicked.connect(self.filtrar)
 
+        # Adicionar botão de selecionar municipio
+        self.docker.selecionar_button.setCheckable(True)
+        self.docker.selecionar_button.clicked.connect(self.selecionar)
+
+
     def executar(self):
         """ Função que executa o plugin ao clicar no botão de ação """
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.docker)
         self.docker.show()
+
+    def selecionar(self):
+        """ Opção de clicar em um municipio e selecioná-lo """
+        #Pega apenas a camada de municipios
+        municipios_layer, _ = self.pegar_camadas()
+
+        #inicializa a ferramenta de seleção
+        try:
+            self.select_tool
+        except AttributeError:
+            self.select_tool = SelectTool(self.iface.mapCanvas(),
+                                          municipios_layer)
+
+        # Se o botão for ativado, executa, se não, muda a ferramenta
+        # (seleciona padrão de navegar no mapa)
+        if self.docker.selecionar_button.isChecked():
+            municipios_layer.removeSelection() # limpa seleções
+            self.iface.mapCanvas().setMapTool(self.select_tool) # usa a nossa ferramenta
+
+        else:
+            self.iface.actionPan().trigger()
+
 
     def filtrar(self):
         """ Opção de filtrar municipios por estado ou região """
@@ -106,7 +134,7 @@ class CityFilter():
         """
 
         expression = QgsExpression(
-            '"{tipo}" LIKE \'{nome}\''.format(
+            u'"{tipo}" LIKE \'{nome}\''.format(
                 tipo=tipo_campo, nome=nome)
             )
 

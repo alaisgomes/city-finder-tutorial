@@ -89,7 +89,7 @@ Vamos criar um menu inicial que será aberto assim que clicarmos no botão do no
 
 Aqui, teremos uma QComboBox que permitirá filtrar dados com base na opção escolhida e apenas um botão que ativará uma opção de selecionar um município ao clicar sobre ele.
 
-Crie um diretório chamado `ui/` em seu projeto e salve o arquivo como `main_docker.ui`.
+Crie um diretório chamado `ui/` em seu projeto e salve o arquivo como `main_docker.ui`. Não se esqueça de adicionar os arquivos vazios de **__init__.py** para que o diretório seja interpretado como um pacote!
 
 Agora, crie um novo arquivo chamado main_docker.py e cole o código abaixo:
 
@@ -406,6 +406,8 @@ def por_estado(self, municipios_layer, estados_layer):
         municipios_layer.selectByExpression(filtro_municipio) # seleciona as features desejadas
 ```
 
+![Selecionando Maranhão](./img/ss5.png)
+
 ## Método por_regiao()
 O código do método por região é muito semelhante ao de por estado, so que agora, vamos iterar sobre a lista retornada na busca de `pegar_por_nome()` e vamos criar uma query que filtre todos os municípios que pertencem a vários estados que compõem a região:
 
@@ -437,4 +439,146 @@ O código do método por região é muito semelhante ao de por estado, so que ag
 
             municipios.selectByExpression(filtro_municipio)
 ```
+
+## Selecionar Municípios com um Clique
+Agora, vamos adicionar a funcionalidade ao outro botão no nosso docker. Olhando no nosso arquivo de xml `main_docker.ui`, vemos que este botão é chamado de `selecionar_button`. Adicionaremos então no nosso plugin no método de `initGui()` a opção realizar uma ação, que será a de executar o método `selecionar()` ( que também será criado) quando clicarmos no botão:
+
+```python
+def initGui(self):
+    ...
+    # Adicionar botão de selecionar municipio
+    self.docker.selecionar_button.clicked.connect(self.selecionar)
+
+def selecionar(self):
+    print("Selecionou")
+
+```
+
+Queremos que, quando clicamos no botão, seja acionado uma nova ferramenta que permite clicae no mapa e selecionar uma feição da camada e, caso clicarmos no botão novamente, essa funcionalidade seja desativada. Esse tipo de botão é cohecido como _checkable_. Devemos então fazer com que o nosso botão seja checkable apenas definido como verdadeira essa sua propriedade (que por padrão é Falsa):
+
+```python
+def initGui(self):
+    ...
+    self.docker.selecionar_button.setCheckable(True)
+    self.docker.selecionar_button.clicked.connect(self.selecionar)
+```
+
+Em seguida, no método `selecionar()` precisamos ter a lógica para que, quando ativado, ele funcione como selecionador de feições, e quando desativado, ele interrompa suas atividades. Observe o código a seguir:
+
+```python
+def selecionar(self):
+    if self.docker.selecionar_button.isChecked():
+        print("Foi ativado")
+    else:
+        print("Desativando a ferramenta!")
+```
+
+Fizemos o que foi proposto verificando se nosso botão foi checado (`isChecked`) ou não. Caso esteja checado ou não, a mensagem no terminal adequada é imprimida.
+
+Antes de prosseguirmos com o código deste método `selecionar()`. Precisamos primeiro definir que ferramenta é esta que vamos utilizar!
+
+### Criando uma QgsMapTool Personalizada
+
+A [QgsMapTool](https://qgis.org/api/2.0/classQgsMapTool.html) é uma classe que permite ser extendida para que você consiga criar uma ferramenta própria que faça manipulações de eventos dentro do canvas do mapa. Por exemplo, criando uma classe do tipo, é possível desenhar polígonos do mapa, identificar quando um evento de clique com botão direito ou esquerdo foi realizado, dentre outras coisas.
+
+Vamos então criar um novo arquivo `select_tool.py` dentro de um diretório (também novo) chamado `lib/`. Vamos adicionar o seguinte código inicial:
+
+```python
+from qgis.gui import QgsMapTool
+
+
+class SelectTool(QgsMapTool):
+    def __init__(self, canvas):
+        QgsMapTool.__init__(self, canvas)
+        self.canvas = canvas
+
+    def canvasPressEvent(self, event):
+        print(event.x(), event.y())
+
+```
+
+Criamos a nossa classe da ferramenta do tipo `QgsMapTool`. Vale lembrar aqui que a classe a qual se está herdando **precisa** receber, como parâmetro, o acesso ao canvas do mapa. Este então deve ser passado para a nossa classe assim que inicializarmos a instância do nosso `SelectTool()` no código principal do nosso plugin.
+
+O método `canvasPressEvent()` é um método base da classe que se herda e sempre é chamado quando o clique do mouse é pressionado no canvas do mapa. Ou seja, ele já é chamado interativamente dentro do QGIS e executado quando a ação mencionada é realizada. No nosso caso, quando um evento (clique) for executado, a coordenadas x e y do clique serão impressas no terminal. Recomendo a leitura da documentação original para entender as possibilidades.
+
+Vamos agora executar nossa ferramenta para realizar o teste do clique. No arquivo principal do plugin, modifique o código do método selecionar() para o seguinte:
+
+
+```python
+def selecionar(self):
+        try:
+            self.select_tool
+        except AttributeError:
+            self.select_tool = SelectTool(self.iface.mapCanvas())
+
+        if self.docker.selecionar_button.isChecked():
+            self.iface.mapCanvas().setMapTool(self.select_tool)
+
+        else:
+            self.iface.actionPan().trigger()
+```
+
+Apenas adicionamos a criação do objeto da ferramenta caso não exista (passando a referência do canvas através da interface principal do qgis `iface`). Adicionamos também o código que ativa a nossa ferramenta caso o plugin seja ativado e desativa a ferramente (ativando a ferramenta de navegação de mapas padrão do QGIS) caso contrário.
+
+### Selecionando Municípios
+Vamos agora adicionar a funcionalidade final de selecionar municípios com o clique. No arquivo da nossa ferramente `select_too.py`, modificaremos o contrutor para receber a camada de municípios além de receber o canvas.
+
+```python
+from qgis.gui import QgsMapTool
+
+
+class SelectTool(QgsMapTool):
+    def __init__(self, canvas, municipios_layer):
+        QgsMapTool.__init__(self, canvas)
+        self.canvas = canvas
+        self.municipios_layer = municipios_layer
+
+```
+
+Já no método de cuida dos eventos de clique no mapa da ferramenta, vamos adicionar um código que faça a seleção de alguma feição a qual se clicou em cima:
+
+```python
+    def canvasPressEvent(self, event):
+
+        if not self.municipios_layer.isValid():
+            return
+
+        layer = self.municipios_layer
+
+        # Aqui estamos definindo como a identificação deve ser feita
+        inicio_identificacao = QgsMapToolIdentify.TopDownStopAtFirst
+
+        # usando  a ferramenta para ver se o local onde clicamos (x,y do evento de clique)
+        # pertence a uma feição da camada
+        feicoes_clicadas = QgsMapToolIdentify(self.canvas).identify(
+            event.x(),
+            event.y(),
+            [layer],
+            inicio_identificacao
+        )
+
+        # se existir, seleciona só a primeira feição retornada na identificação
+        if len(feicoes_clicadas) > 0:
+            municipio_selecionado = feicoes_clicadas[0].mFeature
+            self.municipios_layer.select(municipio_selecionado.id())
+```
+
+Primeiro verificamos se a camada de municípios é valida para dar continuidade. Em seguida, usamos a ferramenta [QgsMapToolIdentify](). Essa próxima linha de código obtém uma informação que será necessária para a seleção: o tipo de seleção que deve acontecer. No caso, vamos fazer com que a feição selecionada seja a primeira de cuma pra baixo e, quando identificada, para por ali (não pega mais nenhuma outra, mesmo que existam feições por baixo) - _TopDownStopAtFirst_.
+
+A próxima linha realiza a verificação de fato: usando a _QgsMapToolIdentify_ sobre o canvas, tentandos identificar se, na posição de x e y do clique (evento), existe alguma feição na camada indicada. A resposta dessa chamada retorna uma lista de seleções.
+
+Caso uma feição tenha sido identificada (lista maior que 0), pegamos apenas a primeira feição e selecionamos ela diretamente na camada com o método `select()` da _QgsVectorLayer_.
+
+![Selecionando municipio com a ferramenta](./img/ss4.png)
+
+## Considerações Finais
+Muitos detalhes sobre funcionamento do QGIS ou explicação de como cada classe do PyQt e do PyQgis funcionam foi omitido deste tutorial, pois a ideia é dar uma introdução ao tópico. Versões futuras podem incluir explicações mais detalhadas. É importante sempre procurar a documentação oficial das classes utilizadas para saber do seu funcionamento e limitações.
+
+## Referências
+
+- [PyQgis Developer Cookbook Official - QGIS 2](https://docs.qgis.org/2.18/pdf/en/QGIS-2.18-PyQGISDeveloperCookbook-en.pdf) | [Versão em Português](https://docs.qgis.org/2.18/pt_BR/docs/pyqgis_developer_cookbook/)
+- [Tutorials Point: PyQt](https://www.tutorialspoint.com/pyqt/)
+- [Pythonprogramming: PyQt Tutorial](https://pythonprogramming.net/basic-gui-pyqt-tutorial/)
+- [PyQgis 101](https://anitagraser.com/pyqgis-101-introduction-to-qgis-python-programming-for-non-programmers/)
+
 
