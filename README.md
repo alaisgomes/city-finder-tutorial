@@ -40,7 +40,10 @@ Os ícones nas barras de ferramentas são uma instância de [QAction](https://do
 | Não se esqueça de importar o arquivo de resources gerado!
 
 ```python
+from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+from qgis.core import *
+from qgis.gui import *
 import resources
 ...
 
@@ -58,13 +61,14 @@ def initGui(self):
     # Adicionar na interface do QGIS, no menu ToolBar de plugins, a ação desejada
     self.iface.addToolBarIcon(self.button_action)
 
-
 def executar(self):
     # executa o que tiver que executar no plugin
     print("Executou")
     pass
 
 ```
+
+**Nota**: Estamos importando todas as bibliotecas no qt e do qgis no início do arquivo para praticidade. Mas dentre as boas práticas, é importante importar apenas o que se vai usar, até mesmo para aprender e entender de qual pacote cada elemento usado vêm (interface do gui, funcionalidades das bibliotecas cores, etc).
 
 Vamos abrir o qgis e ativar o plugin! Vá ao menu de Complementos/Plugins e abra a janela de carregar plugins. Em  configurações, ative a opção de visualizar plugins experimentais. Volte na aba de plugins instalados e ative o nosso __City Filter__. Agora podemos ver nosso plugin! Caso clique no botão na barra de ferramentas (ao lado do ícone do Python), ele vai imprimir a mensagem de execução.
 
@@ -112,9 +116,13 @@ Esse código permite que você altere o arquivo `.ui` como quiser no qt designer
 Vamos agora carregar o Widget na interface do QGIS. Para isso, vamos importar a classe criada no arquivo criado anteriormente (`main_docker.py`) no plugin principal e vamos inicializar a instância do objeto no construtor de interface `initGui()` da classe:
 
 ```python
-def initGui(self):
-    ...
-    self.docker = CityFilterDockWidget()
+from ui.main_docker import CityFilterDockWidget
+
+...
+
+    def initGui(self):
+        ...
+        self.docker = CityFilterDockWidget()
 ```
 
 Vamos agora fazer com que o Widget seja adicionado à interface sempre que clicarmos na ação do plugin. Ou seja, adicionar o código que abre a interface dentro do método `executar()`. Ele agora fica assim:
@@ -320,6 +328,11 @@ def por_estado(self, municipios_layer, estados_layer):
 Agora, vamos passar a lista retornada para a janela de diálogo que vamos criar e, vamos executar a janela:
 
 ```python
+from ui.filter_dialog import FilterDialog
+
+...
+
+
 def por_estado(self, municipios_layer, estados_layer):
     index_coluna = estados_layer.fieldNameIndex('NM_ESTADO')
     lista_de_estados = estados.uniqueValues(index_coluna)
