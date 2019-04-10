@@ -574,8 +574,15 @@ Caso uma feição tenha sido identificada (lista maior que 0), pegamos apenas a 
 ## Considerações Finais
 Muitos detalhes sobre funcionamento do QGIS ou explicação de como cada classe do PyQt e do PyQgis funcionam foi omitido deste tutorial, pois a ideia é dar uma introdução ao tópico. Versões futuras podem incluir explicações mais detalhadas. É importante sempre procurar a documentação oficial das classes utilizadas para saber do seu funcionamento e limitações.
 
-## Referências
+## Exercícios
+É possível extender o plugin para que funcione da melhor forma possível. Seguem algumas modificações sugeridas, caso queria trabalhar mais a fundo e pesquisar por conta própria como fazer, para aprender ainda mais:
 
+- Tratar erros de quando as camadas não forem válidas;
+- Deixar usuário escolher quais são as camadas de municipio e estados, para que não seja dependente do nome. Isso pode ser atingindo listando todas as camadas existentes em duas combobox: uma para escolher municipio e outra para escolher estados;
+- Quando clicar no município desejado, imprimir em uma janela de informações, dados sobre ele na tabela de atributos: nome, código, estado, região;
+- Fixar a altura mínima do plugin para que quando o docker for carregado, não precise ajustar seu tamanho para visualização.
+
+## Referências
 - [PyQgis Developer Cookbook Official - QGIS 2](https://docs.qgis.org/2.18/pdf/en/QGIS-2.18-PyQGISDeveloperCookbook-en.pdf) | [Versão em Português](https://docs.qgis.org/2.18/pt_BR/docs/pyqgis_developer_cookbook/)
 - [Tutorials Point: PyQt](https://www.tutorialspoint.com/pyqt/)
 - [Pythonprogramming: PyQt Tutorial](https://pythonprogramming.net/basic-gui-pyqt-tutorial/)
