@@ -574,6 +574,9 @@ Caso uma feição tenha sido identificada (lista maior que 0), pegamos apenas a 
 ## Considerações Finais
 Muitos detalhes sobre funcionamento do QGIS ou explicação de como cada classe do PyQt e do PyQgis funcionam foi omitido deste tutorial, pois a ideia é dar uma introdução ao tópico. Versões futuras podem incluir explicações mais detalhadas. É importante sempre procurar a documentação oficial das classes utilizadas para saber do seu funcionamento e limitações.
 
+## PluginBuilder
+É possível começar a constriuir um plugin de forma mais simples e limpa, sem precisar criar todos os arquivos obrigatórios mencionados no começo do tutorial manualmente. isso é possível utilizando o plugin chamado [PluginBuilder](https://plugins.qgis.org/plugins/pluginbuilder/). Consulte a [documentação](https://github.com/g-sherman/Qgis-Plugin-Builder/blob/master/help/source/index.rst) para mais informações.
+
 ## Exercícios
 É possível extender o plugin para que funcione da melhor forma possível. Seguem algumas modificações sugeridas, caso queria trabalhar mais a fundo e pesquisar por conta própria como fazer, para aprender ainda mais:
 
